@@ -57,3 +57,19 @@ def loadData(data):
     node_number = list(item for item in range(0, len(node_names)))
     nodes = {node_number[i]: node_names[i] for i in range(len(node_number))}
     return data, nodes
+#%%
+# correlate our c-Fos counts between brain regions, df for data
+# type for correlation coefficient i.e. "pearson"
+def corrMatrix(data):
+    rVal = np.corrcoef(data, rowvar=False)  # calculate pearson coefficients
+    rf = rVal[np.triu_indices(rVal.shape[0], 1)]  # upper triangular matrix of data to shuffle for p-value calc
+    df = data.shape[1] - 2  # calculate degrees of freedom
+    ts = rf * rf * (df / (1 - rf * rf))  # calculate t's
+    pf = sc.betainc(0.5 * df, 0.5, df / (df + ts))  # calculate p's from beta incomplete function
+    # generate p-value matrix
+    p = np.zeros(shape=rVal.shape)
+    p[np.triu_indices(p.shape[0], 1)] = pf
+    p[np.tril_indices(p.shape[0], -1)] = p.T[np.tril_indices(p.shape[0], -1)]
+    p[np.diag_indices(p.shape[0])] = np.ones(p.shape[0])
+    return rVal, p
+#%%
